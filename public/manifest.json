@@ -1,0 +1,5 @@
+{
+    "name": "Drinks",
+    "author": "The Free MRE Foundation",
+    "optionalPermissions": ["user-interaction"]
+}
