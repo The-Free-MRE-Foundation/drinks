@@ -4,6 +4,7 @@
  */
 
 import { DegreesToRadians, Quaternion, ScaledTransform, ScaledTransformLike } from "@microsoft/mixed-reality-extension-sdk";
+import fetch from "node-fetch";
 
 export function translate(transformLike: Partial<ScaledTransformLike>) {
         const pos = transformLike.position ? transformLike.position : { x: 0, y: 0, z: 0 };
@@ -20,4 +21,10 @@ export function translate(transformLike: Partial<ScaledTransformLike>) {
                 scale,
         });
         return transform;
+}
+
+export async function fetchJSON(url: string) {
+        const res = await fetch(url);
+        const text = await res.text();
+        return JSON.parse(text);
 }

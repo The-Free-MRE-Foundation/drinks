@@ -3,19 +3,123 @@
  * Licensed under the MIT License.
  */
 
-import { Actor, AlphaMode, AssetContainer, AttachPoint, BoxAlignment, ButtonBehavior, ColliderType, CollisionLayer, Color3, Color4, Context, DegreesToRadians, Guid, PlanarGridLayout, Quaternion, ScaledTransform, ScaledTransformLike, User } from "@microsoft/mixed-reality-extension-sdk";
+import { Actor, AlphaMode, AssetContainer, AttachPoint, BoxAlignment, ButtonBehavior, ColliderType, CollisionLayer, Color3, Color4, Context, DegreesToRadians, Guid, ParameterSet, PlanarGridLayout, Quaternion, ScaledTransform, ScaledTransformLike, User } from "@microsoft/mixed-reality-extension-sdk";
 import { Player } from "./player";
-import { translate } from "./utils";
+import { fetchJSON, translate } from "./utils";
 
 const MIN_SYNC_INTERVAL = 1;
+
+const DEFAULT_DRINKS = [
+        {
+                name: 'beer1',
+                transform: {
+                        position: {
+                                x: -0.046, y: -0.046, z: 0.097
+                        },
+                        rotation: {
+                                x: 0, y: 0, z: 90
+                        }
+                },
+                fill: {
+                        resourceId: 'artifact:2031009852607693004',
+                        transform: {
+                                position: {
+                                        x: 0, y: -0.09474531, z: 0.09932772
+                                },
+                        }
+                },
+                levels: [
+                        {
+                                resourceId: 'artifact:2031999289508496224',
+                        },
+                        {
+                                resourceId: 'artifact:2031999289240060766',
+                        },
+                        {
+                                resourceId: 'artifact:2031999289374278495',
+                        },
+                        {
+                                resourceId: 'artifact:2031009852473475275',
+                        },
+                        {
+                                resourceId: 'artifact:2031009852867739853',
+                        },
+                        {
+                                resourceId: 'artifact:2031009852347646154',
+                        }
+                ],
+                trigger: {
+                        transform: {
+                                position: {
+                                        x: -0.1488, y: -0.0443, z: 0.0424
+                                },
+                                rotation: {
+                                        x: 0, y: 0, z: 90
+                                },
+                        },
+                        dimensions: {
+                                width: 0.04,
+                                height: 0.04,
+                                depth: 0.04
+                        }
+                }
+        },
+        {
+                name: 'beer2',
+                transform: {
+                        position: {
+                                x: -0.046, y: -0.046, z: 0.097
+                        },
+                        rotation: {
+                                x: 0, y: 0, z: 90
+                        }
+                },
+                fill: {
+                        resourceId: 'artifact:2031009852607693004',
+                        transform: {
+                                position: {
+                                        x: 0, y: -0.09474531, z: 0.09932772
+                                },
+                        }
+                },
+                levels: [
+                        {
+                                resourceId: 'artifact:2031009852473475275',
+                        },
+                        {
+                                resourceId: 'artifact:2031009852867739853',
+                        },
+                        {
+                                resourceId: 'artifact:2031009852347646154',
+                        }
+                ],
+                trigger: {
+                        transform: {
+                                position: {
+                                        x: -0.1488, y: -0.0443, z: 0.0424
+                                },
+                                rotation: {
+                                        x: 0, y: 0, z: 90
+                                },
+                        },
+                        dimensions: {
+                                width: 0.04,
+                                height: 0.04,
+                                depth: 0.04
+                        }
+                }
+        }
+];
 
 /**
  * The main class of this app. All the logic goes here.
  */
 export default class App {
         private drinksApp: DrinksApp;
+        private url: string;
 
-        constructor(private context: Context) {
+        constructor(private context: Context, params: ParameterSet) {
+                this.url = params['url'] as string;
                 this.context.onStarted(() => this.started());
                 this.context.onUserJoined((u: User) => this.userjoined(u));
                 this.context.onUserLeft((u: User) => this.userleft(u));
@@ -25,6 +129,7 @@ export default class App {
          * Once the context is "started", initialize the app.
          */
         private async started() {
+                let drinks = this.url ? await fetchJSON(this.url) : DEFAULT_DRINKS;
                 this.drinksApp = new DrinksApp(this.context, {
                         dispensor: {
                                 resourceId: 'artifact:2031491611455652680',
@@ -37,107 +142,7 @@ export default class App {
                                         width: 0.3, height: 0.5, depth: 0.25
                                 }
                         },
-                        drinks: [
-                                {
-                                        name: 'beer1',
-                                        transform: {
-                                                position: {
-                                                        x: -0.046, y: -0.046, z: 0.097
-                                                },
-                                                rotation: {
-                                                        x: 0, y: 0, z: 90
-                                                }
-                                        },
-                                        fill: {
-                                                resourceId: 'artifact:2031009852607693004',
-                                                transform: {
-                                                        position: {
-                                                                x: 0, y: -0.09474531, z: 0.09932772
-                                                        },
-                                                }
-                                        },
-                                        levels: [
-                                                {
-                                                        resourceId: 'artifact:2031999289508496224',
-                                                },
-                                                {
-                                                        resourceId: 'artifact:2031999289240060766',
-                                                },
-                                                {
-                                                        resourceId: 'artifact:2031999289374278495',
-                                                },
-                                                {
-                                                        resourceId: 'artifact:2031009852473475275',
-                                                },
-                                                {
-                                                        resourceId: 'artifact:2031009852867739853',
-                                                },
-                                                {
-                                                        resourceId: 'artifact:2031009852347646154',
-                                                }
-                                        ],
-                                        trigger: {
-                                                transform: {
-                                                        position: {
-                                                                x: -0.1488, y: -0.0443, z: 0.0424
-                                                        },
-                                                        rotation: {
-                                                                x: 0, y: 0, z: 90
-                                                        },
-                                                },
-                                                dimensions: {
-                                                        width: 0.04,
-                                                        height: 0.04,
-                                                        depth: 0.04
-                                                }
-                                        }
-                                },
-                                {
-                                        name: 'beer2',
-                                        transform: {
-                                                position: {
-                                                        x: -0.046, y: -0.046, z: 0.097
-                                                },
-                                                rotation: {
-                                                        x: 0, y: 0, z: 90
-                                                }
-                                        },
-                                        fill: {
-                                                resourceId: 'artifact:2031009852607693004',
-                                                transform: {
-                                                        position: {
-                                                                x: 0, y: -0.09474531, z: 0.09932772
-                                                        },
-                                                }
-                                        },
-                                        levels: [
-                                                {
-                                                        resourceId: 'artifact:2031009852473475275',
-                                                },
-                                                {
-                                                        resourceId: 'artifact:2031009852867739853',
-                                                },
-                                                {
-                                                        resourceId: 'artifact:2031009852347646154',
-                                                }
-                                        ],
-                                        trigger: {
-                                                transform: {
-                                                        position: {
-                                                                x: -0.1488, y: -0.0443, z: 0.0424
-                                                        },
-                                                        rotation: {
-                                                                x: 0, y: 0, z: 90
-                                                        },
-                                                },
-                                                dimensions: {
-                                                        width: 0.04,
-                                                        height: 0.04,
-                                                        depth: 0.04
-                                                }
-                                        }
-                                }
-                        ],
+                        drinks,
                         mouth: {
                                 dimensions: {
                                         width: 0.08,
@@ -175,12 +180,6 @@ export default class App {
         private async userleft(user: User) {
                 this.drinksApp?.userleft(user);
         }
-
-        /**
-         * Generate keyframe data for a simple spin animation.
-         * @param duration The length of time in seconds it takes to complete a full revolution.
-         * @param axis The axis of rotation in local space.
-         */
 }
 
 export interface DrinksAppOptions {

@@ -1,0 +1,121 @@
+[
+	{
+		"name": "beer1",
+		"transform": {
+			"position": {
+				"x": -0.046,
+				"y": -0.046,
+				"z": 0.097
+			},
+			"rotation": {
+				"x": 0,
+				"y": 0,
+				"z": 90
+			}
+		},
+		"fill": {
+			"resourceId": "artifact:2031009852607693004",
+			"transform": {
+				"position": {
+					"x": 0,
+					"y": -0.09474531,
+					"z": 0.09932772
+				}
+			}
+		},
+		"levels": [
+			{
+				"resourceId": "artifact:2031999289508496224"
+			},
+			{
+				"resourceId": "artifact:2031999289240060766"
+			},
+			{
+				"resourceId": "artifact:2031999289374278495"
+			},
+			{
+				"resourceId": "artifact:2031009852473475275"
+			},
+			{
+				"resourceId": "artifact:2031009852867739853"
+			},
+			{
+				"resourceId": "artifact:2031009852347646154"
+			}
+		],
+		"trigger": {
+			"transform": {
+				"position": {
+					"x": -0.1488,
+					"y": -0.0443,
+					"z": 0.0424
+				},
+				"rotation": {
+					"x": 0,
+					"y": 0,
+					"z": 90
+				}
+			},
+			"dimensions": {
+				"width": 0.04,
+				"height": 0.04,
+				"depth": 0.04
+			}
+		}
+	},
+	{
+		"name": "beer2",
+		"transform": {
+			"position": {
+				"x": -0.046,
+				"y": -0.046,
+				"z": 0.097
+			},
+			"rotation": {
+				"x": 0,
+				"y": 0,
+				"z": 90
+			}
+		},
+		"fill": {
+			"resourceId": "artifact:2031009852607693004",
+			"transform": {
+				"position": {
+					"x": 0,
+					"y": -0.09474531,
+					"z": 0.09932772
+				}
+			}
+		},
+		"levels": [
+			{
+				"resourceId": "artifact:2031009852473475275"
+			},
+			{
+				"resourceId": "artifact:2031009852867739853"
+			},
+			{
+				"resourceId": "artifact:2031009852347646154"
+			}
+		],
+		"trigger": {
+			"transform": {
+				"position": {
+					"x": -0.1488,
+					"y": -0.0443,
+					"z": 0.0424
+				},
+				"rotation": {
+					"x": 0,
+					"y": 0,
+					"z": 90
+				}
+			},
+			"dimensions": {
+				"width": 0.04,
+				"height": 0.04,
+				"depth": 0.04
+			}
+		}
+	}
+]
