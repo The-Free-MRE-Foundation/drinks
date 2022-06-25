@@ -42,10 +42,7 @@ export class Player {
                         mesh = this.assets.createBoxMesh(name, dim.width, dim.height, dim.depth);
                 }
 
-                let material = this.assets.materials.find(m => m.name === 'invisible');
-                if (!material) {
-                        material = this.assets.createMaterial('invisible', { color: Color4.FromColor3(Color3.Red(), 0.0), alphaMode: AlphaMode.Blend });
-                }
+                const material = this.assets.materials.find(m => m.name === 'invisible');
 
                 this.mouth = Actor.Create(this.context, {
                         actor: {
@@ -82,5 +79,18 @@ export class Player {
         public remove() {
                 this.mouth.destroy();
                 this.drink?.remove();
+        }
+
+        public reattach() {
+                if (this.mouth) {
+                        const attachPoint = this.options.mouth.attachPoint ? this.options.mouth.attachPoint : 'head';
+                        const userId = this.options.user;
+                        this.mouth.detach();
+                        this.mouth.attach(userId, attachPoint);
+                }
+
+                if (this.drink){
+                        this.drink.reattach();
+                }
         }
 }

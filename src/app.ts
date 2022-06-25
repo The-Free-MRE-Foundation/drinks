@@ -4,9 +4,10 @@
  */
 
 import { Actor, AlphaMode, AssetContainer, AttachPoint, BoxAlignment, ButtonBehavior, ColliderType, CollisionLayer, Color3, Color4, Context, DegreesToRadians, Guid, PlanarGridLayout, Quaternion, ScaledTransform, ScaledTransformLike, User } from "@microsoft/mixed-reality-extension-sdk";
-import { DRINK_COMMONS } from "./drink";
 import { Player } from "./player";
 import { translate } from "./utils";
+
+const MIN_SYNC_INTERVAL = 1;
 
 /**
  * The main class of this app. All the logic goes here.
@@ -57,6 +58,15 @@ export default class App {
                                         },
                                         levels: [
                                                 {
+                                                        resourceId: 'artifact:2031999289508496224',
+                                                },
+                                                {
+                                                        resourceId: 'artifact:2031999289240060766',
+                                                },
+                                                {
+                                                        resourceId: 'artifact:2031999289374278495',
+                                                },
+                                                {
                                                         resourceId: 'artifact:2031009852473475275',
                                                 },
                                                 {
@@ -65,7 +75,22 @@ export default class App {
                                                 {
                                                         resourceId: 'artifact:2031009852347646154',
                                                 }
-                                        ]
+                                        ],
+                                        trigger: {
+                                                transform: {
+                                                        position: {
+                                                                x: -0.1488, y: -0.0443, z: 0.0424
+                                                        },
+                                                        rotation: {
+                                                                x: 0, y: 0, z: 90
+                                                        },
+                                                },
+                                                dimensions: {
+                                                        width: 0.04,
+                                                        height: 0.04,
+                                                        depth: 0.04
+                                                }
+                                        }
                                 },
                                 {
                                         name: 'beer2',
@@ -95,7 +120,22 @@ export default class App {
                                                 {
                                                         resourceId: 'artifact:2031009852347646154',
                                                 }
-                                        ]
+                                        ],
+                                        trigger: {
+                                                transform: {
+                                                        position: {
+                                                                x: -0.1488, y: -0.0443, z: 0.0424
+                                                        },
+                                                        rotation: {
+                                                                x: 0, y: 0, z: 90
+                                                        },
+                                                },
+                                                dimensions: {
+                                                        width: 0.04,
+                                                        height: 0.04,
+                                                        depth: 0.04
+                                                }
+                                        }
                                 }
                         ],
                         mouth: {
@@ -164,6 +204,14 @@ export interface DrinksAppOptions {
                         resourceId: string,
                         sound?: string,
                 }[],
+                trigger: {
+                        transform: Partial<ScaledTransformLike>,
+                        dimensions: {
+                                width: number,
+                                height: number,
+                                depth: number
+                        }
+                }
         }[],
         mouth: {
                 attachPoint?: AttachPoint,
@@ -193,13 +241,19 @@ export class DrinksApp {
         private dispensorGridLayout: PlanarGridLayout;
         private dispensors: Actor[] = [];
 
+        private tray: Actor;
+
         private fills: Map<number, Actor>;
         private players: Map<Guid, Player>;
+
+        // sync fix
+        private syncTimeout: NodeJS.Timeout;
 
         constructor(private context: Context, private options: DrinksAppOptions) {
                 this.assets = new AssetContainer(this.context);
                 this.fills = new Map<number, Actor>();
                 this.players = new Map<Guid, Player>();
+                this.assets.createMaterial('invisible', { color: Color4.FromColor3(Color3.Red(), 0.0), alphaMode: AlphaMode.Blend });
                 this.init();
         }
 
@@ -221,10 +275,7 @@ export class DrinksApp {
                                 mesh = this.assets.createBoxMesh('mesh_dispensor_collider', dim.width, dim.height, dim.depth);
                         }
 
-                        let material = this.assets.materials.find(m => m.name === 'invisible');
-                        if (!material) {
-                                material = this.assets.createMaterial('invisible', { color: Color4.FromColor3(Color3.Red(), 0.0), alphaMode: AlphaMode.Blend });
-                        }
+                        const material = this.assets.materials.find(m => m.name === 'invisible');
                         const collider = Actor.Create(this.context, {
                                 actor: {
                                         parentId: this.dispensorAnchor.id,
@@ -241,14 +292,6 @@ export class DrinksApp {
                                 }
                         });
 
-                        collider.setBehavior(ButtonBehavior).onClick((user, _) => {
-                                if (!this.fills.has(i)) {
-                                        this.spawnFill(i);
-                                } else {
-                                        this.removeFill(i);
-                                        this.equipDrink(i, user);
-                                }
-                        });
 
                         // model
                         const local = translate(this.options.dispensor.transform).toJSON();
@@ -275,6 +318,21 @@ export class DrinksApp {
                         this.dispensorGridLayout.applyLayout();
                         return collider;
                 });
+
+                this.setDispenserBehaviors();
+        }
+
+        private setDispenserBehaviors() {
+                this.dispensors.forEach((d, i) => {
+                        d.setBehavior(ButtonBehavior).onClick((user, _) => {
+                                if (!this.fills.has(i)) {
+                                        this.spawnFill(i);
+                                } else {
+                                        this.removeFill(i);
+                                        this.equipDrink(i, user);
+                                }
+                        });
+                })
         }
 
         private createTray() {
@@ -285,12 +343,9 @@ export class DrinksApp {
                         mesh = this.assets.createBoxMesh('tray_collider', dim.width, dim.height, dim.depth);
                 }
 
-                let material = this.assets.materials.find(m => m.name === 'invisible');
-                if (!material) {
-                        material = this.assets.createMaterial('invisible', { color: Color4.FromColor3(Color3.Red(), 0.0), alphaMode: AlphaMode.Blend });
-                }
+                const material = this.assets.materials.find(m => m.name === 'invisible');
                 const local = translate(this.options.tray.transform);
-                const collider = Actor.Create(this.context, {
+                this.tray = Actor.Create(this.context, {
                         actor: {
                                 transform: {
                                         local
@@ -308,20 +363,25 @@ export class DrinksApp {
                         }
                 });
 
-                collider.setBehavior(ButtonBehavior).onClick((user, _) => {
-                        const player = this.players.get(user.id);
-                        if (!player){ return; }
-                        player.removeDrink();
-                });
-
                 // model
                 const resourceId = this.options.tray.resourceId;
                 Actor.CreateFromLibrary(this.context, {
                         resourceId,
                         actor: {
-                                parentId: collider.id,
+                                parentId: this.tray.id,
                         }
                 });
+
+                this.setTrayBehavior();
+        }
+
+        private setTrayBehavior() {
+                this.tray.setBehavior(ButtonBehavior).onClick((user, _) => {
+                        const player = this.players.get(user.id);
+                        if (!player) { return; }
+                        player.removeDrink();
+                });
+
         }
 
         private spawnFill(i: number) {
@@ -345,6 +405,7 @@ export class DrinksApp {
                 if (!this.fills.has(i)) return;
                 const fill = this.fills.get(i);
                 fill?.destroy();
+                this.fills.delete(i);
         }
 
         private equipDrink(i: number, user: User) {
@@ -353,16 +414,31 @@ export class DrinksApp {
                         user,
                         transform: this.options.drinks[i].transform,
                         levels: this.options.drinks[i].levels,
-                        trigger: DRINK_COMMONS.trigger
+                        trigger: this.options.drinks[i].trigger
                 });
         }
 
         public async userjoined(user: User) {
+                if (!this.syncTimeout) {
+                        this.syncTimeout = setTimeout(() => {
+                                this.sync();
+                        }, MIN_SYNC_INTERVAL * 1000);
+                }
                 this.createPlayer(user);
         }
 
         public async userleft(user: User) {
                 this.removePlayer(user);
+        }
+
+        private sync() {
+                this.syncTimeout = null;
+                this.players.forEach(p => {
+                        p.reattach();
+                });
+
+                this.setTrayBehavior();
+                this.setDispenserBehaviors();
         }
 
         private createPlayer(user: User) {

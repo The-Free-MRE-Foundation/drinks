@@ -3,19 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Actor, AlphaMode, AssetContainer, AttachPoint, ColliderType, CollisionLayer, Color3, Color4, Context, ScaledTransformLike, User } from "@microsoft/mixed-reality-extension-sdk";
+import { Actor, AssetContainer, AttachPoint, ColliderType, CollisionLayer, Color3, Color4, Context, ScaledTransformLike, User } from "@microsoft/mixed-reality-extension-sdk";
 import { translate } from "./utils";
-
-export const DRINK_COMMONS = {
-        trigger: {
-                transform: {},
-                dimensions: {
-                        width: 0,
-                        height: 0,
-                        depth: 0
-                }
-        }
-}
 
 export interface DrinkOptions {
         user: User,
@@ -35,10 +24,13 @@ export interface DrinkOptions {
         }
 }
 
+const MIN_DRINK_INTERVAL = 1000;
+
 export class Drink {
         private anchor: Actor;
         private models: Actor[] = [];
         private trigger: Actor;
+        private lastSip: number = 0;
 
         private _level: number = 0;
         get level() {
@@ -47,9 +39,13 @@ export class Drink {
         set level(l: number) {
                 l = Math.max(0, Math.min(l, this.options.levels.length - 1));
                 if (this._level == l) return;
+                const now = Date.now();
+                if (now - this.lastSip <= MIN_DRINK_INTERVAL){ return; }
+
                 this.models[this._level].appearance.enabled = false;
                 this._level = l;
                 this.models[this._level].appearance.enabled = true;
+                this.lastSip = now;
         }
 
         constructor(private context: Context, private assets: AssetContainer, private options: DrinkOptions) {
@@ -57,7 +53,14 @@ export class Drink {
         }
 
         private init() {
-                this.anchor = Actor.Create(this.context);
+                this.anchor = Actor.Create(this.context, {
+                        actor: {
+                                attachment: {
+                                        userId: this.options.user.id,
+                                        attachPoint: this.options.attachPoint ? this.options.attachPoint : 'right-hand',
+                                }
+                        }
+                });
                 this.createModels();
                 this.createTrigger();
         }
@@ -75,10 +78,6 @@ export class Drink {
                                         transform: {
                                                 local
                                         },
-                                        attachment: {
-                                                userId: this.options.user.id,
-                                                attachPoint: this.options.attachPoint ? this.options.attachPoint : 'right-hand',
-                                        }
                                 }
                         });
                         return model;
@@ -94,10 +93,7 @@ export class Drink {
                         mesh = this.assets.createBoxMesh(name, dim.width, dim.height, dim.depth);
                 }
 
-                let material = this.assets.materials.find(m => m.name === 'invisible');
-                if (!material) {
-                        material = this.assets.createMaterial('invisible', { color: Color4.FromColor3(Color3.Red(), 0.0), alphaMode: AlphaMode.Blend });
-                }
+                const material = this.assets.materials.find(m => m.name === 'invisible');
 
                 this.trigger = Actor.Create(this.context, {
                         actor: {
@@ -124,14 +120,21 @@ export class Drink {
 
                 this.trigger.collider.onTrigger('trigger-enter', (actor: Actor) => {
                         if (actor.name == 'mouth') {
-                                this.level--;
+                                this.level++;
                         }
                 });
         }
 
         public remove() {
-                this.models.forEach(a=>a.destroy());
+                this.models.forEach(a => a.destroy());
                 this.trigger.destroy();
                 this.anchor.destroy();
+        }
+
+        public reattach(){
+                const attachPoint = this.options.attachPoint ? this.options.attachPoint : 'right-hand';
+                const userId = this.options.user;
+                this.anchor.detach();
+                this.anchor.attach(userId, attachPoint);
         }
 }
